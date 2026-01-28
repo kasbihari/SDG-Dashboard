@@ -1,0 +1,89 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model SdgMetric {
+  id        String   @id @default(cuid())
+  sdgNumber Int
+  country   String
+  year      Int
+  metricKey String
+  value     Float?
+  source    String?
+  createdAt DateTime @default(now())
+
+  @@index([sdgNumber, country, year])
+  @@index([metricKey])
+}
+
+model ContactMessage {
+  id          String    @id @default(cuid())
+  name        String
+  email       String
+  subject     String?
+  message     String
+  responded   Boolean   @default(false)
+  respondedAt DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([email])
+  @@index([createdAt])
+}
+
+model User {
+  id        String     @id @default(cuid())
+  name      String
+  email     String     @unique
+  password  String
+  createdAt DateTime   @default(now())
+  favorites Favorite[]  
+  profilePicture String?
+}
+
+model sdgcountry {
+  id        BigInt     @id @default(autoincrement())
+  name      String?    @db.VarChar(255)
+  sdgvalue  sdgvalue[]
+}
+
+model sdgserie {
+  id          BigInt     @id @default(autoincrement())
+  description String?    @db.VarChar(255)
+  indicator   String?    @db.VarChar(255)
+  name        String?    @db.VarChar(255)
+  source      String?    @db.VarChar(255)
+  sdgvalue    sdgvalue[]
+}
+
+model sdgvalue {
+  value      Decimal?   @db.Decimal(38, 2)
+  year       Int?
+  country_id BigInt?
+  id         BigInt     @id @default(autoincrement())
+  serie_id   BigInt?
+
+  sdgcountry sdgcountry? @relation(fields: [country_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "FKjnlx1m3yyk74hier1cq2nr8x8")
+  sdgserie   sdgserie?   @relation(fields: [serie_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "FKrlkri38qy1des6nhj0qfj1l76")
+
+  @@index([country_id], map: "FKjnlx1m3yyk74hier1cq2nr8x8")
+  @@index([serie_id], map: "FKrlkri38qy1des6nhj0qfj1l76")
+}
+
+model Favorite {
+  id        String   @id @default(cuid())
+  userId    String
+  sdgNumber Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  
+  @@unique([userId, sdgNumber])
+  @@index([userId])
+}
